@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -6,38 +7,46 @@ using Microsoft.Extensions.Logging;
 
 namespace NwnServerStatus.Functions
 {
-    public static class StatusOrchestration
+    public class StatusOrchestration
     {
+        private readonly NwMasterService nwMasterService;
+
+        public StatusOrchestration(NwMasterService nwMasterService)
+        {
+            this.nwMasterService = nwMasterService;
+        }
+
         [FunctionName("StatusOrchestration")]
-        public static async Task<List<string>> RunOrchestrator(
+        public async Task<NwMasterApiResponse> RunOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            var outputs = new List<string>();
+            var input = context.GetInput<NwMasterApiResponse>();
+            var status = await context.CallActivityAsync<NwMasterApiResponse>("StatusOrchestration_Poll", input);
 
-            // Replace "hello" with the name of your Durable Activity Function.
-            outputs.Add(await context.CallActivityAsync<string>("StatusOrchestration_Hello", "Tokyo"));
-            outputs.Add(await context.CallActivityAsync<string>("StatusOrchestration_Hello", "Seattle"));
-            outputs.Add(await context.CallActivityAsync<string>("StatusOrchestration_Hello", "London"));
+            await context.CreateTimer(context.CurrentUtcDateTime.AddSeconds(5), CancellationToken.None);
+            context.ContinueAsNew(status);
 
-            // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
-            return outputs;
+            return status;
         }
 
-        [FunctionName("StatusOrchestration_Hello")]
-        public static string SayHello([ActivityTrigger] string name, ILogger log)
-        {
-            log.LogInformation($"Saying hello to {name}.");
-            return $"Hello {name}!";
-        }
+        [FunctionName("StatusOrchestration_Poll")]
+        public async Task<NwMasterApiResponse> SayHello([ActivityTrigger] NwMasterApiResponse status, ILogger log) =>
+            await nwMasterService.GetStatus(status.Host, status.Port);
 
-        [FunctionName("StatusOrchestration_HttpStart")]
-        public static async Task<HttpResponseMessage> HttpStart(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestMessage req,
+        [FunctionName("StatusOrchestration_StartPolling")]
+        public async Task<HttpResponseMessage> StartPolling(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "poll/{ip}/{port:int?}")] HttpRequestMessage req,
             [DurableClient] IDurableOrchestrationClient starter,
+            string ip, int? port,
             ILogger log)
         {
+            var status = await nwMasterService.GetStatus(ip, port ?? 5123);
+
+            // var pollingParameters = await req.Content.ReadAsAsync<StartPollingRequestBody>();
+            // var pollingParams = req.Content.ReadAsStream().ToStartPollingRequestBody();
+
             // Function input comes from the request content.
-            string instanceId = await starter.StartNewAsync("StatusOrchestration", null);
+            string instanceId = await starter.StartNewAsync("StatusOrchestration", status.KxPk, status);
 
             log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
