@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace NwnServerStatus.Services
 {
     public class NwMasterService
@@ -15,7 +13,7 @@ namespace NwnServerStatus.Services
         public async Task<NwMasterApiResponse> GetStatus(string ip, int port)
         {
             var response = await client.GetAsync(new Uri($"{baseUri}/{ip}/{port}"));
-            return await response.Content.ReadAsAsync<NwMasterApiResponse>();
+            return JsonSerializer.Deserialize<NwMasterApiResponse>(await response.Content.ReadAsStringAsync());
         }
     }
 }

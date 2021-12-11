@@ -17,8 +17,9 @@ namespace NwnServerStatus.Functions
         }
 
         [FunctionName("StatusOrchestration")]
-        public async Task<NwMasterApiResponse> RunOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+        public async Task<NwMasterApiResponse> RunPollingCycle(
+            [OrchestrationTrigger] IDurableOrchestrationContext context,
+            ILogger log)
         {
             var input = context.GetInput<NwMasterApiResponse>();
             var status = await context.CallActivityAsync<NwMasterApiResponse>("StatusOrchestration_Poll", input);
@@ -30,7 +31,7 @@ namespace NwnServerStatus.Functions
         }
 
         [FunctionName("StatusOrchestration_Poll")]
-        public async Task<NwMasterApiResponse> SayHello([ActivityTrigger] NwMasterApiResponse status, ILogger log) =>
+        public async Task<NwMasterApiResponse> Poll([ActivityTrigger] NwMasterApiResponse status, ILogger log) =>
             await nwMasterService.GetStatus(status.Host, status.Port);
 
         [FunctionName("StatusOrchestration_StartPolling")]
