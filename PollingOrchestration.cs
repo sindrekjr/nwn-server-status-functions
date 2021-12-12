@@ -18,7 +18,7 @@ namespace NwnServerStatus.Functions
         [FunctionName("PollingOrchestration")]
         public async Task RunPollingCycle([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            var input = context.GetInput<PollingOrchestrationInput>();
+            var input = context.GetInput<OrchestrationInput>();
             var status = await context.CallActivityAsync<ServerStatus>("PollingOrchestration_Poll", (input.Host, input.Port));
             context.SetCustomStatus(status);
 
@@ -41,16 +41,10 @@ namespace NwnServerStatus.Functions
             if (await starter.GetStatusAsync(instanceId) == null)
             {
                 await starter.StartNewAsync("PollingOrchestration", instanceId, new { host, port });
-                log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
+                log.LogInformation($"Started polling orchestration with ID = '{instanceId}'.");
             }
 
             return starter.CreateCheckStatusResponse(req, instanceId);
         }
-    }
-
-    internal class PollingOrchestrationInput
-    {
-        public string Host { get; set; }
-        public int Port { get; set; }
     }
 }
