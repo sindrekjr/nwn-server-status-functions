@@ -10,10 +10,20 @@ namespace NwnServerStatus.Services
             this.client = httpClientFactory.CreateClient();
         }
 
-        public async Task<NwMasterApiResponse> GetStatus(string ip, int port)
+        public async Task<ServerStatus> GetServerStatus(string ip, int port)
         {
             var response = await client.GetAsync(new Uri($"{baseUri}/{ip}/{port}"));
-            return JsonSerializer.Deserialize<NwMasterApiResponse>(await response.Content.ReadAsStringAsync());
+            return JsonSerializer
+                .Deserialize<NwMasterApiResponse>(await response.Content.ReadAsStringAsync())
+                .MapToServerStatus();
+        }
+
+        public async Task<ServerStatus> GetServerStatus(ServerStatus status)
+        {
+            var response = await client.GetAsync(new Uri($"{baseUri}/{status.ServerId}"));
+            return JsonSerializer
+                .Deserialize<NwMasterApiResponse>(await response.Content.ReadAsStringAsync())
+                .MapToServerStatus();
         }
     }
 }
