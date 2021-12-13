@@ -35,7 +35,7 @@ namespace NwnServerStatus.Functions
 
         [FunctionName("MonitoringOrchestration_Start")]
         public static async Task<HttpResponseMessage> StartStatusMonitoring(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "monitor/{host}/{port:int?}")] HttpRequestMessage req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "monitor/{host}/{port:int?}")] HttpRequestMessage req,
             [DurableClient] IDurableOrchestrationClient starter,
             string host, int port,
             ILogger log)
