@@ -12,7 +12,7 @@ Exploring Azure Durable Functions by polling for game servers with Beamdog's [NW
 ## Setup
 Clone the repository and follow these steps.
 
-#### 1. Add `local.settings.json`
+### 1. Add `local.settings.json`
 Required to run Azure Functions locally. You may simply copy-paste the following for development runtime.
 ```json
 {
@@ -23,15 +23,18 @@ Required to run Azure Functions locally. You may simply copy-paste the following
   }
 }
 ```
-If you have an Azure Storage Account available and wish to use it, add its connection string as the value of `AzureWebJobsStorage`. Please note that using a live storage account for development purposes may incur unwanted costs, as well as unpredictable behaviour when you run varying versions of your functions.
 
-#### 2. Run Azurite OR use Azure Storage Account
+### 2. AzureWebJobsStorage
+Azure Functions requires a storage to store its state. I recommend using azurite for this locally, but you can also choose to use a live storage account on Azure.
+
+#### a. Using an Azure Storage Account
+If you have an Azure Storage Account available and wish to use it, add its connection string as the value of `AzureWebJobsStorage` in `local.settings.json` from the previous step. Please note that using a live storage account for development purposes may incur unwanted costs, as well as unpredictable behaviour when you run varying versions of your functions.
+
+#### b. Using Azurite
 Azurite may be run via the VS Code extension or the command line. I recommend the latter, and I recommend running the following command from the root of your project. That way you will easily be able to delete the generated storage files if you need to "reset".
 ```
 azurite --blobHost
 ```
-
-If you have an Azure Storage Account available and wish to use it, add its connection string as the value of `AzureWebJobsStorage` in `local.settings.json` from the previous step. Please note that using a live storage account for development purposes may incur unwanted costs, as well as unpredictable behaviour when you run varying versions of your functions.
 
 ## Usage
 ```
@@ -47,7 +50,7 @@ For example, to start polling the server at `46.4.59.55:5123`, run your function
 curl http://localhost:7071/api/poll/46.4.59.55/5123
 ```
 
-You should receive a response which includes `statusQueryGetUri`. This address is used to fetch the polling orchestrations current status once it has been triggered.
+You should receive a response which includes `statusQueryGetUri`. This address is used to fetch the polling orchestration's current status once it has been triggered.
 
 ## Docs
 - [Durable Functions Overview | Microsoft Docs](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview?tabs=csharp)
